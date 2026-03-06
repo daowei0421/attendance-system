@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考勤系統</title>
+    <style>
+        :root {
+            --primary: #ff6b35;
+            --primary-dark: #e55a2b;
+            --bg: #fafafa;
+            --white: #ffffff;
+            --text: #222;
+            --text-light: #666;
+            --border: #ddd;
+        }
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 0; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px; text-align: center; }
+        .header h1 { margin: 0 0 5px 0; font-size: 22px; }
+        .header p { margin: 0; opacity: 0.9; font-size: 14px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 14px 20px; border-radius: 30px; font-size: 15px; cursor: pointer; width: 100%; }
+        .btn:hover { background: var(--primary-dark); }
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: white; }
+        .btn-small { padding: 8px 16px; width: auto; font-size: 13px; }
+        .stat-card { text-align: center; padding: 16px; background: #fff5f0; border-radius: 12px; }
+        .stat-card .num { font-size: 24px; font-weight: bold; color: var(--primary); }
+        .stat-card .lbl { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+        .user-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .user-btn { padding: 20px; border: 2px solid var(--border); border-radius: 16px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .user-btn:hover { border-color: var(--primary); }
+        .user-btn.selected { border-color: var(--primary); background: #fff5f0; }
+        .user-btn .av { width: 50px; height: 50px; background: var(--primary); border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; }
+        .user-btn .nm { font-size: 15px; font-weight: 500; }
+        .user-btn .rl { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .item:last-child { border-bottom: none; }
+        .item-info h4 { margin: 0; font-size: 15px; }
+        .item-info p { margin: 2px 0 0; font-size: 13px; color: var(--text-light); }
+        .status { padding: 4px 12px; border-radius: 12px; font-size: 12px; }
+        .status.pen { background: #fff3e0; color: #f57c00; }
+        .status.app { background: #e8f5e9; color: #43a047; }
+        .empty { text-align: center; padding: 30px; color: var(--text-light); }
+        .back { display: inline-block; padding: 10px 16px; background: white; border: 1px solid var(--border); border-radius: 20px; margin-bottom: 16px; cursor: pointer; font-size: 14px; }
+        .back:hover { background: #f5f5f5; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 14px; color: var(--text-light); margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏠 考勤系統</h1>
+        <p id="subtitle">選擇你的身份</p>
+    </div>
+    <div class="container">
+        <div id="back" class="back hidden" onclick="goBack()">← 返回</div>
+        
+        <!-- 選擇身份 -->
+        <div id="page-role" class="card">
+            <div class="user-grid">
+                <div class="user-btn" onclick="selectUser('e1', false)">
+                    <div class="av">小</div>
+                    <div class="nm">小明</div>
+                    <div class="rl">員工</div>
+                </div>
+                <div class="user-btn" onclick="selectUser('e2', false)">
+                    <div class="av">小</div>
+                    <div class="nm">小華</div>
+                    <div class="rl">員工</div>
+                </div>
+                <div class="user-btn" onclick="selectUser('e3', false)">
+                    <div class="av">小</div>
+                    <div class="nm">小美</div>
+                    <div class="rl">員工</div>
+                </div>
+                <div class="user-btn" onclick="selectUser('m1', true)">
+                    <div class="av">王</div>
+                    <div class="nm">王主管</div>
+                    <div class="rl">主管</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 員工專區 -->
+        <div id="page-employee" class="hidden">
+            <div class="card">
+                <div class="card-title">📊 我的請假餘額</div>
+                <div class="grid">
+                    <div class="stat-card">
+                        <div class="num" id="leave-annual">7</div>
+                        <div class="lbl">特休 (天)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="num" id="leave-brain">2</div>
+                        <div class="lbl">放空假 (天)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📝 申請</div>
+                <div class="grid">
+                    <button class="btn btn-outline" onclick="showPage('leave')">📋 申請請假</button>
+                    <button class="btn btn-outline" onclick="showPage('overtime')">⏰ 申請加班</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📋 我的申請記錄</div>
+                <div id="my-records"><div class="empty">尚無申請記錄</div></div>
+            </div>
+        </div>
+        
+        <!-- 主管專區 -->
+        <div id="page-manager" class="hidden">
+            <div class="card">
+                <div class="card-title">📋 待審核申請 <span id="pending-count" style="background:#dc3545;color:white;padding:2px8px;border-radius:10px;font-size:12px">0</span></div>
+                <div id="pending-list"><div class="empty">目前沒有待審核的申請</div></div>
+            </div>
+            <div class="card">
+                <div class="card-title">👥 員工管理</div>
+                <button class="btn" onclick="showPage('addemp')">➕ 新增員工</button>
+            </div>
+        </div>
+        
+        <!-- 請假表單 -->
+        <div id="page-leave" class="card hidden">
+            <div class="card-title">📋 申請請假</div>
+            <form onsubmit="submitLeave(event)">
+                <div class="form-group">
+                    <label>假別</label>
+                    <select id="leave-type" required><option value="">選擇假別</option><option value="特休">特休</option><option value="放空假">放空假</option><option value="病假">病假</option><option value="事假">事假</option></select>
+                </div>
+                <div class="form-group">
+                    <label>日期</label>
+                    <input type="date" id="leave-date" required>
+                </div>
+                <div class="form-group">
+                    <label>天數</label>
+                    <input type="number" id="leave-days" step="0.5" value="1" required>
+                </div>
+                <div class="grid">
+                    <button type="button" class="btn" style="background:#999" onclick="showPage('back')">取消</button>
+                    <button type="submit" class="btn">送出</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 加班表單 -->
+        <div id="page-overtime" class="card hidden">
+            <div class="card-title">⏰ 申請加班</div>
+            <form onsubmit="submitOvertime(event)">
+                <div class="form-group">
+                    <label>日期</label>
+                    <input type="date" id="ot-date" required>
+                </div>
+                <div class="form-group">
+                    <label>時數</label>
+                    <input type="number" id="ot-hours" step="0.5" value="2" required>
+                </div>
+                <div class="grid">
+                    <button type="button" class="btn" style="background:#999" onclick="showPage('back')">取消</button>
+                    <button type="submit" class="btn">送出</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 新增員工 -->
+        <div id="page-addemp" class="card hidden">
+            <div class="card-title">➕ 新增員工</div>
+            <form onsubmit="submitEmployee(event)">
+                <div class="form-group">
+                    <label>姓名</label>
+                    <input type="text" id="emp-name" required>
+                </div>
+                <div class="form-group">
+                    <label>部門</label>
+                    <input type="text" id="emp-dept" required>
+                </div>
+                <div class="form-group">
+                    <label>入職日期</label>
+                    <input type="date" id="emp-start" required>
+                </div>
+                <div class="grid">
+                    <button type="button" class="btn" style="background:#999" onclick="showPage('back')">取消</button>
+                    <button type="submit" class="btn">新增</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // 員工資料
+        const employees = [
+            { id: 'e1', name: '小明', role: '員工', dept: '業務', start: '2024-01-15', annual: 7, brain: 2, ot: 0 },
+            { id: 'e2', name: '小華', role: '員工', dept: '行銷', start: '2023-06-01', annual: 10, brain: 2, ot: 4 },
+            { id: 'e3', name: '小美', role: '員工', dept: '行政', start: '2022-03-10', annual: 14, brain: 2, ot: 0 },
+            { id: 'm1', name: '王主管', role: '主管', dept: '管理', start: '2020-01-01', annual: 14, brain: 2, ot: 10 }
+        ];
+        
+        let currentUser = null;
+        let isManager = false;
+        let history = ['role'];
+        
+        // 選擇用戶
+        function selectUser(id, isMgr) {
+            currentUser = employees.find(e => e.id === id);
+            isManager = isMgr;
+            
+            document.getElementById('subtitle').textContent = '歡迎，' + currentUser.name;
+            
+            // 選擇效果
+            document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('selected'));
+            event.target.closest('.user-btn').classList.add('selected');
+            
+            // 顯示對應頁面
+            document.getElementById('page-role').classList.add('hidden');
+            document.getElementById('back').classList.remove('hidden');
+            
+            if (isManager) {
+                document.getElementById('page-manager').classList.remove('hidden');
+                document.getElementById('pending-count').textContent = '0';
+            } else {
+                document.getElementById('page-employee').classList.remove('hidden');
+                document.getElementById('leave-annual').textContent = currentUser.annual;
+                document.getElementById('leave-brain').textContent = currentUser.brain;
+            }
+        }
+        
+        // 頁面切換
+        function showPage(page) {
+            document.getElementById('page-employee').classList.add('hidden');
+            document.getElementById('page-manager').classList.add('hidden');
+            document.getElementById('page-leave').classList.add('hidden');
+            document.getElementById('page-overtime').classList.add('hidden');
+            document.getElementById('page-addemp').classList.add('hidden');
+            
+            if (page === 'back') {
+                if (isManager) {
+                    document.getElementById('page-manager').classList.remove('hidden');
+                } else {
+                    document.getElementById('page-employee').classList.remove('hidden');
+                }
+                return;
+            }
+            
+            if (page === 'leave') {
+                document.getElementById('page-leave').classList.remove('hidden');
+                document.getElementById('leave-date').value = new Date().toISOString().split('T')[0];
+            } else if (page === 'overtime') {
+                document.getElementById('page-overtime').classList.remove('hidden');
+                document.getElementById('ot-date').value = new Date().toISOString().split('T')[0];
+            } else if (page === 'addemp') {
+                document.getElementById('page-addemp').classList.remove('hidden');
+                document.getElementById('emp-start').value = new Date().toISOString().split('T')[0];
+            }
+        }
+        
+        // 返回
+        function goBack() {
+            showPage('back');
+        }
+        
+        // 送出請假
+        function submitLeave(e) {
+            e.preventDefault();
+            const type = document.getElementById('leave-type').value;
+            const days = parseFloat(document.getElementById('leave-days').value);
+            
+            if (type === '特休' && days > currentUser.annual) {
+                alert('特休餘額不足！');
+                return;
+            }
+            if (type === '放空假' && days > currentUser.brain) {
+                alert('放空假餘額不足！');
+                return;
+            }
+            
+            alert('申請已送出！');
+            showPage('back');
+        }
+        
+        // 送出加班
+        function submitOvertime(e) {
+            e.preventDefault();
+            alert('加班申請已送出！');
+            showPage('back');
+        }
+        
+        // 新增員工
+        function submitEmployee(e) {
+            e.preventDefault();
+            alert('員工已新增！');
+            showPage('back');
+        }
+    </script>
+</body>
+</html>
